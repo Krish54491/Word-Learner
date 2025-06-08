@@ -5,6 +5,10 @@ from openai import OpenAI
 import keyboard
 import time
 import random
+import requests
+from pydub import AudioSegment
+from pydub.playback import play
+
 transcript = ""
 engine = pyttsx3.init()
 word = ""
@@ -15,6 +19,14 @@ def word_definition():
     global engine
     word= ""
     word_definition = ""
+    api_url = 'https://api.api-ninjas.com/v1/randomword'
+    response = requests.get(api_url, headers={'X-Api-Key': 'UfRiEbyPPCYoFjQ7Iy+1EA==1QBM1NkHKQk9lEoO'})
+    if response.status_code == requests.codes.ok:
+        word = response.text
+        print(response.text)
+    else:
+        print("Error:", response.status_code, response.text)
+    print(f"Word: {word}")
     # get the word definition from the AI
     client = OpenAI(
         base_url="https://openrouter.ai/api/v1",
@@ -28,7 +40,7 @@ def word_definition():
         [
           {
             "role": "user",
-            "content": ("Please give me a single word and its definition in a short paragraph, you can use any words, don't use the word in a sentence. Before defining the word type the word at the top in bold. DEFINE ONLY ONE WORD, please try not to use any special characters or special ways of displaying.")
+            "content": ("Please define this word " + str(word) + " in a short paragraph, you can use any words, don't use the word in a sentence. DEFINE ONLY " + str(word) +", don't use any special characters or special ways of displaying.")
             }
         ]
     )
@@ -42,7 +54,7 @@ def word_definition():
     # Have it tts the ai response
     engine.say(word_definition)
     engine.runAndWait()
-    word = re.search(r'\*\*(.*?)\*\*', completion.choices[0].message.content, re.IGNORECASE).group(1)
+    # word = re.search(r'\*\*(.*?)\*\*', completion.choices[0].message.content, re.IGNORECASE).group(1)
     print(f"Word: {word}")
     return word_definition
 
@@ -72,16 +84,19 @@ def bad_thing():
     past_time = time.time()
     delta_time = 60
     possible_keys = ['w', 'a', 's', 'd', 'i', 'space', 'j', 'f','k','q','e'] # change this to whatever keys you want the program to press randomly, default is controls for blazeblue entrophy effect
-    while(time.time() - past_time <= delta_time):
-        if keyboard.is_pressed(end_character):
-            print("Exiting bad thing loop.")
-            return
-        if keyboard.is_pressed(cheat_character):
-            engine.say("Skipping punishment. L")
-            engine.runAndWait()
-            return
-        keyboard.press_and_release(random.choice(possible_keys))
-        time.sleep(0.2)  # Adjust the delay as needed to control the frequency of key presses
+    keyboard.press('alt + f4')  # Example of a bad thing, you can change this to whatever you want SUGGESTED BY COPILOT NOT ME BTW!
+    play(AudioSegment.from_mp3("Vine boom.mp3"))  
+
+    # while(time.time() - past_time <= delta_time):
+    #     if keyboard.is_pressed(end_character):
+    #         print("Exiting bad thing loop.")
+    #         return
+    #     if keyboard.is_pressed(cheat_character):
+    #         engine.say("Skipping punishment. L")
+    #         engine.runAndWait()
+    #         return
+    #     keyboard.press_and_release(random.choice(possible_keys))
+    #     time.sleep(0.2)  # Adjust the delay as needed to control the frequency of key presses
 
 def WordCheck():
     global engine
@@ -99,28 +114,30 @@ def WordCheck():
         [
           {
             "role": "user",
-            "content": (f"Check if the word '{word}' is used correctly in the following, try to be a little lenient if the word is spelled wrong or if it's pronounced similarly. Please only say if it's correct or incorrect once, and do not say both. Here is the transcribe of someone speaking: {transcript}. If it is used correctly, respond with 'Correct'. If it is not used correctly, respond with 'Incorrect'.")
+            "content": (f"Check if the word '{word}' is used correctly in the following, try to be a little lenient if the word is spelled wrong or if it's pronounced similarly. HOWEVER, be critical, but fair if the usage of the word, if its used incorrectly yell at the user. Please only say if it's correct or incorrect once, and do not say both. Here is the transcript of someone speaking: {transcript}. If it is used correctly, respond with 'Correct'. If it is not used correctly, respond with 'Incorrect' keep it short, less than 2 sentences!")
             }
         ]
     )
     try:
-        check = re.search(r'(?<!bold\s)\b(correct)\b(?!\s*bold)', completion.choices[0].message.content, re.IGNORECASE)
-        print(completion.choices[0].message.content)
+        check = (completion.choices[0].message.content).lower()
+        print(f"AI Response: {check}")
+        # print(completion.choices[0].message.content)
         engine.say(completion.choices[0].message.content)
         engine.runAndWait()
 
     except Exception as e:
         print("Error accessing response:", e)
         print("Full response:", completion)
-    if check and not re.search(r'\bincorrect\b', completion.choices[0].message.content, re.IGNORECASE):
-        print("The word was used correctly.")
-        return True
-    else:
+    if ("incorrect" in check) and word:
         print("The word was not used correctly.")
         engine.say("FAILURE")
         engine.runAndWait()
         bad_thing()
-        return False
+    else:
+        print("The word was used correctly.")
+        engine.say("SUCCESS")
+        engine.runAndWait()
+        return True
 
 
 def main():
