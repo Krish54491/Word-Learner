@@ -20,7 +20,7 @@ def word_definition():
     word= ""
     word_definition = ""
     api_url = 'https://api.api-ninjas.com/v1/randomword'
-    response = requests.get(api_url, headers={'X-Api-Key': 'UfRiEbyPPCYoFjQ7Iy+1EA==1QBM1NkHKQk9lEoO'})
+    response = requests.get(api_url, headers={'X-Api-Key': 'get your own api key from https://api-ninjas.com/'})
     if response.status_code == requests.codes.ok:
         word = response.text
         print(response.text)
